@@ -1,0 +1,81 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.production
+*.secret
+
+# API Keys and credentials
+credentials.json
+secrets.yaml
+config.production.yaml
+
+# SharePoint credentials
+sharepoint-auth.json
+
+# Azure credentials
+azure-credentials.json
+
+# Word template files (binary)
+*.docx
+*.doc
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Copilot Studio export files
+*.zip
+exports/
+
+# Test files
+test-outputs/
+*.test.docx
+
+# Power Automate local runs
+power-automate-cache/
+
+# Node modules (if using any tooling)
+node_modules/
+
+# Python virtual environments (if using any tooling)
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Build outputs
+dist/
+build/
+*.bundle.js
+
+# Backup files
+*.bak
+*.backup
+backup/
+
+# User-specific files
+.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates

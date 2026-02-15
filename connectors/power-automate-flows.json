@@ -1,0 +1,277 @@
+{
+  "name": "Document Generation Flow",
+  "description": "Power Automate flow for generating Word documents from templates",
+  "version": "1.0.0",
+  "trigger": {
+    "type": "manual",
+    "kind": "Http",
+    "inputs": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "document_type": {
+            "type": "string",
+            "enum": ["SOW", "Proposal"]
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "project_name": {
+            "type": "string"
+          },
+          "content_sections": {
+            "type": "object",
+            "properties": {
+              "executive_summary": {"type": "string"},
+              "background": {"type": "string"},
+              "scope": {"type": "string"},
+              "deliverables": {"type": "array"},
+              "timeline": {"type": "object"},
+              "team": {"type": "object"},
+              "pricing": {"type": "object"},
+              "terms": {"type": "string"}
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "author": {"type": "string"},
+              "version": {"type": "string"},
+              "date": {"type": "string"},
+              "status": {"type": "string"}
+            }
+          }
+        },
+        "required": ["document_type", "client_name", "project_name", "content_sections"]
+      }
+    }
+  },
+  "actions": [
+    {
+      "name": "Parse_Generation_Input",
+      "type": "ParseJson",
+      "inputs": {
+        "content": "@triggerBody()",
+        "schema": "@trigger().inputs.schema"
+      }
+    },
+    {
+      "name": "Get_Template",
+      "type": "SharePoint.GetFileContent",
+      "inputs": {
+        "site": "@variables('SharePointSiteUrl')",
+        "filePath": "/Templates/@{if(equals(body('Parse_Generation_Input')?['document_type'], 'SOW'), 'SOW-Template.docx', 'Proposal-Template.docx')}"
+      },
+      "runAfter": {
+        "Parse_Generation_Input": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Generate_Filename",
+      "type": "Compose",
+      "inputs": "@{replace(body('Parse_Generation_Input')?['client_name'], ' ', '')}_@{replace(body('Parse_Generation_Input')?['project_name'], ' ', '')}_@{body('Parse_Generation_Input')?['document_type']}_v@{coalesce(body('Parse_Generation_Input')?['metadata']?['version'], '1.0')}_@{formatDateTime(utcNow(), 'yyyy-MM-dd')}.docx",
+      "runAfter": {
+        "Parse_Generation_Input": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Populate_Document_Metadata",
+      "type": "Compose",
+      "inputs": {
+        "Title": "@{body('Parse_Generation_Input')?['client_name']} - @{body('Parse_Generation_Input')?['project_name']} @{body('Parse_Generation_Input')?['document_type']}",
+        "Author": "@{coalesce(body('Parse_Generation_Input')?['metadata']?['author'], 'Copilot Studio')}",
+        "Company": "Your Company Name",
+        "Version": "@{coalesce(body('Parse_Generation_Input')?['metadata']?['version'], '1.0')}",
+        "Date": "@{coalesce(body('Parse_Generation_Input')?['metadata']?['date'], formatDateTime(utcNow(), 'yyyy-MM-dd'))}",
+        "Status": "@{coalesce(body('Parse_Generation_Input')?['metadata']?['status'], 'Draft')}",
+        "Confidentiality": "Confidential and Proprietary"
+      },
+      "runAfter": {
+        "Get_Template": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Populate_Word_Template",
+      "type": "Word.PopulateTemplate",
+      "inputs": {
+        "template": "@body('Get_Template')",
+        "mappings": {
+          "ClientName": "@body('Parse_Generation_Input')?['client_name']",
+          "ProjectName": "@body('Parse_Generation_Input')?['project_name']",
+          "DocumentType": "@body('Parse_Generation_Input')?['document_type']",
+          "Date": "@body('Populate_Document_Metadata')?['Date']",
+          "Version": "@body('Populate_Document_Metadata')?['Version']",
+          "Status": "@body('Populate_Document_Metadata')?['Status']",
+          "ExecutiveSummary": "@body('Parse_Generation_Input')?['content_sections']?['executive_summary']",
+          "Background": "@body('Parse_Generation_Input')?['content_sections']?['background']",
+          "Scope": "@body('Parse_Generation_Input')?['content_sections']?['scope']",
+          "Deliverables": "@body('Parse_Generation_Input')?['content_sections']?['deliverables']",
+          "Timeline": "@body('Parse_Generation_Input')?['content_sections']?['timeline']",
+          "Team": "@body('Parse_Generation_Input')?['content_sections']?['team']",
+          "Pricing": "@body('Parse_Generation_Input')?['content_sections']?['pricing']",
+          "Terms": "@body('Parse_Generation_Input')?['content_sections']?['terms']"
+        }
+      },
+      "runAfter": {
+        "Populate_Document_Metadata": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Apply_Formatting",
+      "type": "Word.ApplyFormatting",
+      "inputs": {
+        "document": "@body('Populate_Word_Template')",
+        "formatting": {
+          "font": "Calibri",
+          "fontSize": 11,
+          "lineSpacing": 1.15,
+          "margins": {
+            "top": "1in",
+            "bottom": "1in",
+            "left": "1in",
+            "right": "1in"
+          },
+          "headings": {
+            "heading1": {
+              "fontSize": 18,
+              "bold": true,
+              "color": "#0078D4"
+            },
+            "heading2": {
+              "fontSize": 14,
+              "bold": true,
+              "color": "#106EBE"
+            },
+            "heading3": {
+              "fontSize": 12,
+              "bold": true
+            }
+          }
+        }
+      },
+      "runAfter": {
+        "Populate_Word_Template": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Add_Header_Footer",
+      "type": "Word.AddHeaderFooter",
+      "inputs": {
+        "document": "@body('Apply_Formatting')",
+        "header": {
+          "left": "Company Logo",
+          "center": "@{body('Parse_Generation_Input')?['client_name']} - @{body('Parse_Generation_Input')?['document_type']}",
+          "right": "Page [Page] of [Pages]"
+        },
+        "footer": {
+          "left": "Version @{body('Populate_Document_Metadata')?['Version']}",
+          "center": "@{body('Populate_Document_Metadata')?['Confidentiality']}",
+          "right": "@{body('Populate_Document_Metadata')?['Date']}"
+        }
+      },
+      "runAfter": {
+        "Apply_Formatting": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Set_Document_Properties",
+      "type": "Word.SetProperties",
+      "inputs": {
+        "document": "@body('Add_Header_Footer')",
+        "properties": "@body('Populate_Document_Metadata')"
+      },
+      "runAfter": {
+        "Add_Header_Footer": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Save_To_SharePoint",
+      "type": "SharePoint.CreateFile",
+      "inputs": {
+        "site": "@variables('SharePointSiteUrl')",
+        "folderPath": "/@{if(equals(body('Parse_Generation_Input')?['document_type'], 'SOW'), 'SOWs', 'Proposals')}/Generated",
+        "fileName": "@body('Generate_Filename')",
+        "content": "@body('Set_Document_Properties')",
+        "metadata": {
+          "Client": "@body('Parse_Generation_Input')?['client_name']",
+          "ProjectName": "@body('Parse_Generation_Input')?['project_name']",
+          "DocumentType": "@body('Parse_Generation_Input')?['document_type']",
+          "Status": "Draft",
+          "GeneratedBy": "Copilot Studio",
+          "GeneratedDate": "@utcNow()"
+        }
+      },
+      "runAfter": {
+        "Set_Document_Properties": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Calculate_Word_Count",
+      "type": "Compose",
+      "inputs": "@length(split(string(body('Parse_Generation_Input')?['content_sections']), ' '))",
+      "runAfter": {
+        "Save_To_SharePoint": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Calculate_Quality_Score",
+      "type": "Compose",
+      "inputs": {
+        "completeness": "@if(and(not(empty(body('Parse_Generation_Input')?['content_sections']?['executive_summary'])), not(empty(body('Parse_Generation_Input')?['content_sections']?['scope'])), not(empty(body('Parse_Generation_Input')?['content_sections']?['deliverables'])), not(empty(body('Parse_Generation_Input')?['content_sections']?['pricing']))), 25, mul(add(if(empty(body('Parse_Generation_Input')?['content_sections']?['executive_summary']), 0, 1), if(empty(body('Parse_Generation_Input')?['content_sections']?['scope']), 0, 1), if(empty(body('Parse_Generation_Input')?['content_sections']?['deliverables']), 0, 1), if(empty(body('Parse_Generation_Input')?['content_sections']?['pricing']), 0, 1)), 6.25))",
+        "word_count_score": "@if(greater(body('Calculate_Word_Count'), 5000), 25, if(greater(body('Calculate_Word_Count'), 2000), 20, 15))",
+        "formatting_score": 25,
+        "metadata_score": "@if(and(not(empty(body('Parse_Generation_Input')?['client_name'])), not(empty(body('Parse_Generation_Input')?['project_name']))), 25, 15)"
+      },
+      "runAfter": {
+        "Calculate_Word_Count": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Build_Response",
+      "type": "Compose",
+      "inputs": {
+        "success": true,
+        "document_url": "@body('Save_To_SharePoint')?['LinkingUrl']",
+        "document_id": "@body('Save_To_SharePoint')?['ItemId']",
+        "file_name": "@body('Generate_Filename')",
+        "file_size_bytes": "@body('Save_To_SharePoint')?['Size']",
+        "word_count": "@body('Calculate_Word_Count')",
+        "quality_score": "@add(body('Calculate_Quality_Score')?['completeness'], body('Calculate_Quality_Score')?['word_count_score'], body('Calculate_Quality_Score')?['formatting_score'], body('Calculate_Quality_Score')?['metadata_score'])",
+        "sections_included": "@keys(body('Parse_Generation_Input')?['content_sections'])",
+        "metadata": "@body('Populate_Document_Metadata')",
+        "generated_at": "@utcNow()"
+      },
+      "runAfter": {
+        "Calculate_Quality_Score": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Return_Response",
+      "type": "Response",
+      "inputs": {
+        "statusCode": 200,
+        "body": "@body('Build_Response')"
+      },
+      "runAfter": {
+        "Build_Response": ["Succeeded"]
+      }
+    }
+  ],
+  "variables": [
+    {
+      "name": "SharePointSiteUrl",
+      "type": "string",
+      "value": "https://yourtenant.sharepoint.com/sites/YourSite"
+    }
+  ],
+  "connections": {
+    "sharepoint": {
+      "connectionId": "/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/connections/sharepoint",
+      "id": "/subscriptions/{subscription}/providers/Microsoft.Web/locations/{location}/managedApis/sharepoint"
+    },
+    "word": {
+      "connectionId": "/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/connections/wordonline",
+      "id": "/subscriptions/{subscription}/providers/Microsoft.Web/locations/{location}/managedApis/wordonline"
+    }
+  }
+}

@@ -1,0 +1,143 @@
+name: Document Generation Agent
+description: Generates polished SOW and proposal documents from research and analysis
+version: 1.0.0
+
+# Agent Configuration
+agent_type: subagent
+model: gpt-4
+temperature: 0.7
+max_tokens: 8000
+
+# Input Schema
+inputs:
+  - name: document_type
+    type: choice
+    required: true
+    choices:
+      - SOW
+      - Proposal
+    description: Type of document to generate
+
+  - name: client_name
+    type: string
+    required: true
+    description: Client organization name
+
+  - name: project_name
+    type: string
+    required: true
+    description: Project name or title
+
+  - name: requirements_summary
+    type: string
+    required: true
+    description: Summary of client requirements and needs
+
+  - name: research_findings
+    type: object
+    required: false
+    description: Output from Document Research Agent
+
+  - name: capabilities_analysis
+    type: object
+    required: true
+    description: Output from Offerings & Capabilities Agent
+
+  - name: meeting_content
+    type: string
+    required: false
+    description: Original meeting transcript or notes
+
+  - name: additional_context
+    type: string
+    required: false
+    description: Any additional context or special requirements
+
+  - name: template_preference
+    type: string
+    required: false
+    description: Specific template to use (if any)
+
+# Document Components
+document_sections:
+  sow:
+    - Executive Summary
+    - Project Background
+    - Scope of Work
+    - Deliverables
+    - Timeline and Milestones
+    - Roles and Responsibilities
+    - Assumptions and Dependencies
+    - Acceptance Criteria
+    - Pricing and Payment Terms
+    - Terms and Conditions
+
+  proposal:
+    - Executive Summary
+    - Understanding of Requirements
+    - Proposed Solution
+    - Project Approach and Methodology
+    - Deliverables and Success Criteria
+    - Project Timeline
+    - Team and Qualifications
+    - Investment and Pricing
+    - Why Choose Us
+    - Case Studies and References
+    - Terms and Conditions
+    - Next Steps
+
+# Formatting Standards
+formatting:
+  font: Calibri
+  font_size: 11
+  heading1_size: 18
+  heading2_size: 14
+  heading3_size: 12
+  line_spacing: 1.15
+  margins: 1 inch
+  page_numbers: true
+  header_footer: true
+
+# Branding Elements
+branding:
+  - Company logo in header
+  - Brand colors for headings
+  - Standard footer with contact information
+  - Document metadata (version, date, confidentiality)
+
+# Quality Checks
+quality_checks:
+  - Grammar and spelling verification
+  - Consistency in terminology
+  - Completeness of all required sections
+  - Accurate pricing and calculations
+  - Proper formatting and styling
+  - No placeholder text remaining
+  - Client name spelled correctly throughout
+  - All cross-references accurate
+
+# Output Schema
+outputs:
+  - name: document_content
+    type: string
+    description: Full document content in markdown or HTML
+
+  - name: document_file
+    type: file
+    description: Generated document in DOCX format
+
+  - name: summary
+    type: string
+    description: Brief summary of the generated document
+
+  - name: word_count
+    type: integer
+    description: Total word count
+
+  - name: sections_included
+    type: array
+    description: List of sections included in the document
+
+  - name: quality_score
+    type: number
+    description: Self-assessment quality score (0-100)

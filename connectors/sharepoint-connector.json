@@ -1,0 +1,226 @@
+{
+  "name": "SharePoint Document Search Connector",
+  "description": "Power Automate flow for searching SOW and Proposal documents in SharePoint",
+  "version": "1.0.0",
+  "trigger": {
+    "type": "manual",
+    "kind": "Http",
+    "inputs": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "client_name": {
+            "type": "string",
+            "description": "Name of the client to search for"
+          },
+          "document_type": {
+            "type": "string",
+            "enum": ["SOW", "Proposal", "Both"],
+            "description": "Type of document to search"
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Keywords to search for"
+          },
+          "date_range": {
+            "type": "string",
+            "description": "Date range filter (e.g., 'last 2 years')"
+          },
+          "max_results": {
+            "type": "integer",
+            "default": 10,
+            "description": "Maximum number of results to return"
+          }
+        },
+        "required": ["client_name", "document_type"]
+      }
+    }
+  },
+  "actions": [
+    {
+      "name": "Parse_Search_Input",
+      "type": "ParseJson",
+      "inputs": {
+        "content": "@triggerBody()",
+        "schema": "@trigger().inputs.schema"
+      }
+    },
+    {
+      "name": "Calculate_Date_Filter",
+      "type": "Compose",
+      "inputs": "@if(empty(body('Parse_Search_Input')?['date_range']), '', addDays(utcNow(), mul(-1, if(equals(body('Parse_Search_Input')?['date_range'], 'last year'), 365, if(equals(body('Parse_Search_Input')?['date_range'], 'last 2 years'), 730, 1825)))))"
+    },
+    {
+      "name": "Search_SOW_Library",
+      "type": "SharePoint.GetFiles",
+      "inputs": {
+        "site": "@variables('SharePointSiteUrl')",
+        "folderPath": "/SOWs",
+        "filter": "Modified ge '@{body('Calculate_Date_Filter')}'",
+        "top": "@body('Parse_Search_Input')?['max_results']"
+      },
+      "runAfter": {
+        "Calculate_Date_Filter": ["Succeeded"]
+      },
+      "condition": "@or(equals(body('Parse_Search_Input')?['document_type'], 'SOW'), equals(body('Parse_Search_Input')?['document_type'], 'Both'))"
+    },
+    {
+      "name": "Search_Proposal_Library",
+      "type": "SharePoint.GetFiles",
+      "inputs": {
+        "site": "@variables('SharePointSiteUrl')",
+        "folderPath": "/Proposals",
+        "filter": "Modified ge '@{body('Calculate_Date_Filter')}'",
+        "top": "@body('Parse_Search_Input')?['max_results']"
+      },
+      "runAfter": {
+        "Calculate_Date_Filter": ["Succeeded"]
+      },
+      "condition": "@or(equals(body('Parse_Search_Input')?['document_type'], 'Proposal'), equals(body('Parse_Search_Input')?['document_type'], 'Both'))"
+    },
+    {
+      "name": "Combine_Results",
+      "type": "Compose",
+      "inputs": "@union(body('Search_SOW_Library')?['value'], body('Search_Proposal_Library')?['value'])",
+      "runAfter": {
+        "Search_SOW_Library": ["Succeeded", "Skipped"],
+        "Search_Proposal_Library": ["Succeeded", "Skipped"]
+      }
+    },
+    {
+      "name": "Filter_By_Client",
+      "type": "Filter",
+      "inputs": {
+        "from": "@body('Combine_Results')",
+        "where": "@contains(toLower(item()?['Client']), toLower(body('Parse_Search_Input')?['client_name']))"
+      },
+      "runAfter": {
+        "Combine_Results": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Filter_By_Keywords",
+      "type": "Filter",
+      "inputs": {
+        "from": "@body('Filter_By_Client')",
+        "where": "@or(empty(body('Parse_Search_Input')?['keywords']), contains(toLower(concat(item()?['Name'], ' ', item()?['Keywords'])), toLower(join(body('Parse_Search_Input')?['keywords'], ' '))))"
+      },
+      "runAfter": {
+        "Filter_By_Client": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Calculate_Relevance_Scores",
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Filter_By_Keywords')",
+        "select": {
+          "title": "@item()?['Name']",
+          "client": "@item()?['Client']",
+          "type": "@item()?['DocumentType']",
+          "date": "@item()?['Modified']",
+          "url": "@item()?['LinkingUrl']",
+          "services": "@item()?['Services']",
+          "project_value": "@item()?['Value']",
+          "keywords": "@item()?['Keywords']",
+          "relevance_score": "@div(add(if(equals(toLower(item()?['Client']), toLower(body('Parse_Search_Input')?['client_name'])), 50, if(contains(toLower(item()?['Client']), toLower(body('Parse_Search_Input')?['client_name'])), 30, 10)), mul(dateDifference(item()?['Modified'], utcNow(), 'Days'), -0.01), if(empty(body('Parse_Search_Input')?['keywords']), 0, mul(length(intersection(split(toLower(item()?['Keywords']), ','), body('Parse_Search_Input')?['keywords'])), 10))), 100)"
+        }
+      },
+      "runAfter": {
+        "Filter_By_Keywords": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Sort_By_Relevance",
+      "type": "Compose",
+      "inputs": "@reverse(sort(body('Calculate_Relevance_Scores'), 'relevance_score'))",
+      "runAfter": {
+        "Calculate_Relevance_Scores": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Take_Top_Results",
+      "type": "Compose",
+      "inputs": "@take(body('Sort_By_Relevance'), body('Parse_Search_Input')?['max_results'])",
+      "runAfter": {
+        "Sort_By_Relevance": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Extract_Content_From_Top_Documents",
+      "type": "Apply_to_each",
+      "foreach": "@take(body('Take_Top_Results'), 3)",
+      "actions": [
+        {
+          "name": "Get_File_Content",
+          "type": "SharePoint.GetFileContent",
+          "inputs": {
+            "site": "@variables('SharePointSiteUrl')",
+            "fileId": "@items('Extract_Content_From_Top_Documents')?['Id']"
+          }
+        },
+        {
+          "name": "Extract_Text",
+          "type": "AzureAI.DocumentIntelligence",
+          "inputs": {
+            "document": "@body('Get_File_Content')",
+            "operation": "extract_text"
+          }
+        }
+      ],
+      "runAfter": {
+        "Take_Top_Results": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Build_Response",
+      "type": "Compose",
+      "inputs": {
+        "documents_found": "@body('Take_Top_Results')",
+        "total_count": "@length(body('Take_Top_Results'))",
+        "search_criteria": {
+          "client_name": "@body('Parse_Search_Input')?['client_name']",
+          "document_type": "@body('Parse_Search_Input')?['document_type']",
+          "keywords": "@body('Parse_Search_Input')?['keywords']",
+          "date_range": "@body('Parse_Search_Input')?['date_range']"
+        },
+        "excerpts": "@body('Extract_Content_From_Top_Documents')",
+        "timestamp": "@utcNow()"
+      },
+      "runAfter": {
+        "Extract_Content_From_Top_Documents": ["Succeeded"]
+      }
+    },
+    {
+      "name": "Return_Response",
+      "type": "Response",
+      "inputs": {
+        "statusCode": 200,
+        "body": "@body('Build_Response')"
+      },
+      "runAfter": {
+        "Build_Response": ["Succeeded"]
+      }
+    }
+  ],
+  "variables": [
+    {
+      "name": "SharePointSiteUrl",
+      "type": "string",
+      "value": "https://yourtenant.sharepoint.com/sites/YourSite"
+    }
+  ],
+  "connections": {
+    "sharepoint": {
+      "connectionId": "/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/connections/sharepoint",
+      "id": "/subscriptions/{subscription}/providers/Microsoft.Web/locations/{location}/managedApis/sharepoint"
+    },
+    "azureai": {
+      "connectionId": "/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/connections/documentintelligence",
+      "id": "/subscriptions/{subscription}/providers/Microsoft.Web/locations/{location}/managedApis/documentintelligence"
+    }
+  }
+}

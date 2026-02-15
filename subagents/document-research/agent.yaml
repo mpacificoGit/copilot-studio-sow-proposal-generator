@@ -1,0 +1,99 @@
+name: Document Research Agent
+description: Searches and analyzes prior SOWs and proposals from SharePoint
+version: 1.0.0
+
+# Agent Configuration
+agent_type: subagent
+model: gpt-4
+temperature: 0.3
+max_tokens: 3000
+
+# Input Schema
+inputs:
+  - name: client_name
+    type: string
+    required: true
+    description: Name of the client to search for
+
+  - name: document_type
+    type: choice
+    required: true
+    choices:
+      - SOW
+      - Proposal
+      - Both
+    description: Type of documents to search for
+
+  - name: keywords
+    type: array
+    required: false
+    description: Keywords or topics to search for (e.g., cloud, security, AI)
+
+  - name: date_range
+    type: string
+    required: false
+    description: Date range for search (e.g., last 2 years)
+
+  - name: max_results
+    type: integer
+    required: false
+    default: 10
+    description: Maximum number of documents to return
+
+# Capabilities
+capabilities:
+  - SharePoint search and retrieval
+  - Document content extraction
+  - Pattern recognition across documents
+  - Template identification
+  - Metadata extraction
+
+# Connectors
+connectors:
+  - name: SharePoint
+    type: sharepoint
+    authentication: oauth2
+    libraries:
+      - SOWs
+      - Proposals
+      - Templates
+
+  - name: DocumentIntelligence
+    type: azure-ai
+    description: For document analysis and extraction
+
+# Search Strategy
+search_strategy:
+  - step: keyword_search
+    description: Search SharePoint by client name and keywords
+
+  - step: metadata_filter
+    description: Filter by document type, date, and status
+
+  - step: similarity_ranking
+    description: Rank results by relevance to current request
+
+  - step: content_extraction
+    description: Extract key sections and patterns
+
+# Output Schema
+outputs:
+  - name: documents_found
+    type: array
+    description: List of relevant documents with metadata
+
+  - name: key_patterns
+    type: object
+    description: Common patterns found across documents
+
+  - name: templates
+    type: array
+    description: Document templates or structures identified
+
+  - name: excerpts
+    type: array
+    description: Relevant excerpts from top documents
+
+  - name: recommendations
+    type: string
+    description: Recommendations based on historical documents

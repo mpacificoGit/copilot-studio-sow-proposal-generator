@@ -1,0 +1,102 @@
+name: SOW Proposal Orchestrator
+description: Master orchestrator agent for managing SOW and proposal generation workflow
+version: 1.0.0
+
+# Agent Configuration
+agent_type: orchestrator
+model: gpt-4
+temperature: 0.7
+max_tokens: 4000
+
+# Input Schema
+inputs:
+  - name: meeting_transcript
+    type: string
+    required: false
+    description: Transcript from client meeting or discussion
+
+  - name: meeting_notes
+    type: string
+    required: false
+    description: Notes from client meeting or discussion
+
+  - name: document_type
+    type: choice
+    required: true
+    choices:
+      - SOW
+      - Proposal
+    description: Type of document to generate
+
+  - name: client_name
+    type: string
+    required: true
+    description: Name of the client organization
+
+  - name: project_name
+    type: string
+    required: false
+    description: Name or description of the project
+
+  - name: additional_context
+    type: string
+    required: false
+    description: Any additional context or requirements
+
+# Subagent References
+subagents:
+  - name: document_research
+    reference: document-research-agent
+    description: Searches SharePoint for prior SOWs and proposals
+
+  - name: offerings_capabilities
+    reference: offerings-capabilities-agent
+    description: Analyzes company offerings and capabilities
+
+  - name: document_generation
+    reference: document-generation-agent
+    description: Generates final document based on inputs
+
+# Workflow Steps
+workflow:
+  - step: gather_inputs
+    description: Collect and validate user inputs
+
+  - step: research_documents
+    description: Query document research agent for relevant prior work
+    agent: document_research
+
+  - step: analyze_capabilities
+    description: Query offerings agent to match capabilities to needs
+    agent: offerings_capabilities
+
+  - step: generate_document
+    description: Create final document using generation agent
+    agent: document_generation
+
+  - step: review_output
+    description: Present document to user for review
+
+# Connectors
+connectors:
+  - name: SharePoint
+    type: sharepoint
+    description: Access to document libraries
+
+  - name: PowerAutomate
+    type: power-automate
+    description: Workflow automation
+
+# Output Schema
+outputs:
+  - name: generated_document
+    type: file
+    description: The generated SOW or Proposal document
+
+  - name: summary
+    type: string
+    description: Summary of the generated document
+
+  - name: source_documents
+    type: array
+    description: List of source documents referenced

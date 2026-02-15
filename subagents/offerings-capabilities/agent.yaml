@@ -1,0 +1,122 @@
+name: Offerings & Capabilities Agent
+description: Analyzes company offerings and matches capabilities to client requirements
+version: 1.0.0
+
+# Agent Configuration
+agent_type: subagent
+model: gpt-4
+temperature: 0.5
+max_tokens: 3000
+
+# Input Schema
+inputs:
+  - name: client_requirements
+    type: string
+    required: true
+    description: Client needs and requirements extracted from transcript/notes
+
+  - name: project_scope
+    type: string
+    required: false
+    description: Preliminary project scope and objectives
+
+  - name: industry
+    type: string
+    required: false
+    description: Client's industry vertical
+
+  - name: budget_range
+    type: string
+    required: false
+    description: Estimated budget range if known
+
+  - name: timeline
+    type: string
+    required: false
+    description: Expected project timeline or deadline
+
+# Knowledge Sources
+knowledge_sources:
+  - name: services_catalog
+    type: database
+    description: Complete catalog of company services and offerings
+
+  - name: capabilities_matrix
+    type: database
+    description: Detailed capabilities, technologies, and expertise areas
+
+  - name: team_skills
+    type: database
+    description: Available team skills and certifications
+
+  - name: pricing_guidelines
+    type: database
+    description: Standard pricing models and rate cards
+
+  - name: success_stories
+    type: database
+    description: Case studies and successful project outcomes
+
+# Analysis Capabilities
+capabilities:
+  - Requirements analysis and decomposition
+  - Service-to-requirement matching
+  - Capability gap identification
+  - Team resource matching
+  - Pricing estimation
+  - Risk assessment
+  - Timeline feasibility analysis
+
+# Reasoning Process
+reasoning_steps:
+  - step: parse_requirements
+    description: Break down client requirements into discrete needs
+
+  - step: match_services
+    description: Match requirements to available services/offerings
+
+  - step: identify_capabilities
+    description: Identify specific capabilities needed
+
+  - step: assess_feasibility
+    description: Evaluate if requirements are achievable
+
+  - step: recommend_solutions
+    description: Recommend solution architecture and approach
+
+  - step: estimate_effort
+    description: Estimate effort, timeline, and pricing
+
+# Output Schema
+outputs:
+  - name: matched_services
+    type: array
+    description: Services that align with client requirements
+
+  - name: capabilities_required
+    type: array
+    description: Specific capabilities needed for the project
+
+  - name: solution_approach
+    type: string
+    description: Recommended solution architecture
+
+  - name: estimated_effort
+    type: object
+    description: Effort estimates by service/phase
+
+  - name: pricing_recommendation
+    type: object
+    description: Pricing model and estimated costs
+
+  - name: team_composition
+    type: object
+    description: Recommended team structure and roles
+
+  - name: risks_considerations
+    type: array
+    description: Potential risks and mitigation strategies
+
+  - name: differentiators
+    type: array
+    description: Key differentiators and value propositions
