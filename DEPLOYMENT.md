@@ -22,7 +22,7 @@ This guide walks you through deploying the multi-agent Copilot Studio solution f
 
 ## Solution Package
 
-This repository includes a pre-built Power Platform solution package that can be imported directly into your Copilot Studio environment. This is the recommended deployment method.
+This repository includes a Power Platform solution package that creates a solution container in your environment. Agents are then created within this solution using the configuration reference files provided.
 
 ### Building the Solution Package
 Run the packaging script from the repository root:
@@ -31,40 +31,44 @@ Run the packaging script from the repository root:
 ./package-solution.sh
 ```
 
-This produces `SOWProposalGeneration_1_0_0_0.zip` containing all agents, topics, and Power Automate flow definitions.
+This produces `SOWProposalGeneration_1_0_0_0.zip`.
 
 ### Importing the Solution
-1. Navigate to [Copilot Studio](https://copilotstudio.microsoft.com)
-2. Go to **Settings > Solutions** (or use the [Power Apps maker portal](https://make.powerapps.com) > Solutions)
-3. Click **Import solution**
-4. Upload `SOWProposalGeneration_1_0_0_0.zip`
-5. When prompted, configure the required connections:
-   - **SharePoint Online** - authenticate with your service account
-   - **Word Online (Business)** - authenticate for document template population
-6. Click **Import** and wait for the process to complete
+1. Navigate to the [Power Apps maker portal](https://make.powerapps.com) > Solutions
+2. Click **Import solution**
+3. Upload `SOWProposalGeneration_1_0_0_0.zip`
+4. Click **Import** and wait for the process to complete
 
-### What the Solution Includes
+This creates the `SOW and Proposal Generation` solution in your environment as a container for all components.
 
-| Component | Type | Description |
-|-----------|------|-------------|
-| SOW Proposal Orchestrator | Agent (Bot) | Master orchestrator that coordinates the full workflow |
-| Document Research Agent | Agent (Bot) | Searches SharePoint for prior SOWs and proposals |
-| Offerings and Capabilities Agent | Agent (Bot) | Matches client needs to organizational services |
-| Document Generation Agent | Agent (Bot) | Generates polished SOW/Proposal documents |
-| Generate SOW | Topic | Conversation flow for SOW creation |
-| Generate Proposal | Topic | Conversation flow for Proposal creation |
-| Greeting | Topic | Welcome message and capability overview |
-| SharePoint-DocumentSearch | Cloud Flow | Power Automate flow for SharePoint document search |
-| Generate-Word-Document | Cloud Flow | Power Automate flow for Word document generation |
+### Creating Agents Within the Solution
+After the solution imports, create each agent within it. The repository provides complete configuration reference files:
 
-### Post-Import Configuration
-After importing the solution, complete these steps:
+| Reference File | Agent to Create | Description |
+|----------------|-----------------|-------------|
+| `solution/botcomponents/sowprop_SOWProposalOrchestrator.json` | SOW Proposal Orchestrator | Master orchestrator that coordinates the full workflow |
+| `solution/botcomponents/sowprop_DocumentResearchAgent.json` | Document Research Agent | Searches SharePoint for prior SOWs and proposals |
+| `solution/botcomponents/sowprop_OfferingsCapabilitiesAgent.json` | Offerings and Capabilities Agent | Matches client needs to organizational services |
+| `solution/botcomponents/sowprop_DocumentGenerationAgent.json` | Document Generation Agent | Generates polished SOW/Proposal documents |
 
-1. **Set the SharePoint site URL** - Edit both Power Automate flows and update the `SharePointSiteUrl` parameter to point to your SharePoint site
-2. **Enable generative AI** - For each agent, go to Settings > Generative AI and enable it
-3. **Publish each agent** - Agents are imported in draft state and must be published before use
+Each JSON file contains the agent's instructions, inputs, outputs, and connector configuration. Copy the `instructions` field from each file into the corresponding agent's instructions in Copilot Studio.
 
-Then proceed with the remaining deployment steps below for SharePoint setup, knowledge base configuration, and testing.
+**Topic reference files** (for the orchestrator agent):
+
+| Reference File | Topic | Description |
+|----------------|-------|-------------|
+| `solution/Topics/sowprop_GenerateSOW.json` | Generate SOW | Conversation flow for SOW creation |
+| `solution/Topics/sowprop_GenerateProposal.json` | Generate Proposal | Conversation flow for Proposal creation |
+| `solution/Topics/sowprop_Greeting.json` | Greeting | Welcome message and capability overview |
+
+**Power Automate flow reference files** (create separately in Power Automate):
+
+| Reference File | Flow | Description |
+|----------------|------|-------------|
+| `solution/Workflows/SharePoint-DocumentSearch.json` | SharePoint-DocumentSearch | SharePoint document search flow |
+| `solution/Workflows/Generate-Word-Document.json` | Generate-Word-Document | Word document generation flow |
+
+See Step 3 and Step 4 below for detailed setup instructions.
 
 ---
 
