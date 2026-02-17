@@ -2,44 +2,7 @@
 <ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Entities />
   <Roles />
-  <Workflows>
-    <Workflow WorkflowId="{a7b8c9d0-e1f2-3456-abcd-567890123456}" Name="SharePoint-DocumentSearch">
-      <JsonFileName>Workflows/SharePoint-DocumentSearch.json</JsonFileName>
-      <Type>1</Type>
-      <Subprocess>0</Subprocess>
-      <Category>5</Category>
-      <Mode>1</Mode>
-      <Scope>4</Scope>
-      <OnDemand>1</OnDemand>
-      <TriggerOnCreate>0</TriggerOnCreate>
-      <TriggerOnDelete>0</TriggerOnDelete>
-      <AsyncAutodelete>0</AsyncAutodelete>
-      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>
-      <StateCode>1</StateCode>
-      <StatusCode>2</StatusCode>
-      <IsTransacted>1</IsTransacted>
-      <IntroducedVersion>1.0.0.0</IntroducedVersion>
-      <IsCustomizable>1</IsCustomizable>
-    </Workflow>
-    <Workflow WorkflowId="{b8c9d0e1-f2a3-4567-bcde-678901234567}" Name="Generate-Word-Document">
-      <JsonFileName>Workflows/Generate-Word-Document.json</JsonFileName>
-      <Type>1</Type>
-      <Subprocess>0</Subprocess>
-      <Category>5</Category>
-      <Mode>1</Mode>
-      <Scope>4</Scope>
-      <OnDemand>1</OnDemand>
-      <TriggerOnCreate>0</TriggerOnCreate>
-      <TriggerOnDelete>0</TriggerOnDelete>
-      <AsyncAutodelete>0</AsyncAutodelete>
-      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>
-      <StateCode>1</StateCode>
-      <StatusCode>2</StatusCode>
-      <IsTransacted>1</IsTransacted>
-      <IntroducedVersion>1.0.0.0</IntroducedVersion>
-      <IsCustomizable>1</IsCustomizable>
-    </Workflow>
-  </Workflows>
+  <Workflows />
   <BotComponents>
     <BotComponent BotComponentId="{c3d4e5f6-a7b8-9012-cdef-123456789012}" Name="sowprop_SOWProposalOrchestrator">
       <JsonFileName>botcomponents/sowprop_SOWProposalOrchestrator.json</JsonFileName>
