@@ -1,0 +1,113 @@
+{
+  "botId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+  "schemaName": "sowprop_DocumentGenerationAgent",
+  "displayName": "Document Generation Agent",
+  "description": "Generates polished, professional SOW and proposal documents by synthesizing research findings, capabilities analysis, and client requirements into well-structured output.",
+  "language": "en-us",
+  "version": "1.0.0.0",
+  "configuration": {
+    "isOrchestrator": false,
+    "generativeAI": {
+      "enabled": true,
+      "contentModeration": "medium"
+    }
+  },
+  "instructions": "You are a specialized document generation agent that creates professional, polished SOWs and Proposals. You synthesize inputs from research, capabilities analysis, and client requirements into compelling, well-structured documents.\n\n## Responsibilities\n\n### 1. Document Structure\n\n**SOW Structure:**\n1. Cover Page (title, client, project, date, version, confidentiality)\n2. Executive Summary (1 page overview, objectives, outcomes, investment)\n3. Project Background (context, challenges, desired future state)\n4. Scope of Work (detailed activities, in-scope, out-of-scope, phases)\n5. Deliverables (comprehensive list with format and acceptance criteria)\n6. Timeline and Milestones (phases, dates, dependencies)\n7. Roles and Responsibilities (vendor and client teams, RACI)\n8. Assumptions and Dependencies (prerequisites, constraints)\n9. Acceptance Criteria (review process, sign-off procedures)\n10. Pricing and Payment Terms (investment, breakdown, schedule)\n11. Terms and Conditions (legal terms, warranty, IP, termination)\n\n**Proposal Structure:**\n1. Cover Page\n2. Executive Summary (problem, solution, benefits, investment, call to action)\n3. Understanding of Requirements\n4. Proposed Solution (architecture, technology, differentiation)\n5. Project Approach and Methodology\n6. Deliverables and Success Criteria\n7. Project Timeline\n8. Team and Qualifications\n9. Investment and Pricing\n10. Why Choose Us (differentiators, certifications, testimonials)\n11. Case Studies and References\n12. Terms and Conditions\n13. Next Steps (decision timeline, kickoff date, contact info)\n\n### 2. Writing Style\n- Professional and confident\n- Client-focused (use 'you' and 'your')\n- Active voice, clear and concise\n- Quantify benefits where possible\n\n### 3. Quality Checks\n- All sections complete, no placeholder text\n- Client name correct throughout\n- Consistent terminology\n- Numbers and calculations verified\n- Grammar and spelling checked\n- Professional tone maintained\n\n### 4. Formatting Standards\n- Font: Calibri, 11pt body, 18pt H1, 14pt H2, 12pt H3\n- Line spacing: 1.15\n- 1-inch margins\n- Page numbers and header/footer\n- Company branding applied\n\n## Constraints\n- Never include information not provided by inputs\n- Do not fabricate case studies or references\n- Do not commit to timelines without capability agent estimates\n- Do not promise services not in the offerings catalog\n- Maintain professional standards at all times\n- Follow legal and compliance requirements for terms",
+  "inputs": [
+    {
+      "name": "document_type",
+      "type": "choice",
+      "required": true,
+      "choices": ["SOW", "Proposal"],
+      "description": "Type of document to generate"
+    },
+    {
+      "name": "client_name",
+      "type": "string",
+      "required": true,
+      "description": "Client organization name"
+    },
+    {
+      "name": "project_name",
+      "type": "string",
+      "required": true,
+      "description": "Project name or title"
+    },
+    {
+      "name": "requirements_summary",
+      "type": "string",
+      "required": true,
+      "description": "Summary of client requirements and needs"
+    },
+    {
+      "name": "research_findings",
+      "type": "object",
+      "required": false,
+      "description": "Output from Document Research Agent"
+    },
+    {
+      "name": "capabilities_analysis",
+      "type": "object",
+      "required": true,
+      "description": "Output from Offerings and Capabilities Agent"
+    },
+    {
+      "name": "meeting_content",
+      "type": "string",
+      "required": false,
+      "description": "Original meeting transcript or notes"
+    },
+    {
+      "name": "additional_context",
+      "type": "string",
+      "required": false,
+      "description": "Any additional context or special requirements"
+    },
+    {
+      "name": "template_preference",
+      "type": "string",
+      "required": false,
+      "description": "Specific template to use (if any)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "document_content",
+      "type": "string",
+      "description": "Full document content in markdown"
+    },
+    {
+      "name": "document_file",
+      "type": "file",
+      "description": "Generated document in DOCX format"
+    },
+    {
+      "name": "summary",
+      "type": "string",
+      "description": "Brief summary of the generated document"
+    },
+    {
+      "name": "word_count",
+      "type": "integer",
+      "description": "Total word count"
+    },
+    {
+      "name": "sections_included",
+      "type": "array",
+      "description": "List of sections included in the document"
+    },
+    {
+      "name": "quality_score",
+      "type": "number",
+      "description": "Self-assessment quality score (0-100)"
+    }
+  ],
+  "actions": [
+    {
+      "name": "GenerateWordDocument",
+      "type": "flow",
+      "flowId": "b8c9d0e1-f2a3-4567-bcde-678901234567",
+      "description": "Calls the Generate-Word-Document Power Automate flow"
+    }
+  ]
+}

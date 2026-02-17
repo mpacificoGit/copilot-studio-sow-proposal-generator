@@ -1,0 +1,178 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {},
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "SharePointSiteUrl": {
+          "defaultValue": "https://yourtenant.sharepoint.com/sites/YourSite",
+          "type": "String",
+          "metadata": {
+            "schemaName": "sowprop_SharePointSiteUrl",
+            "description": "URL of the SharePoint site containing SOW and Proposal document libraries"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "client_name": {
+                  "type": "string",
+                  "description": "Name of the client to search for"
+                },
+                "document_type": {
+                  "type": "string",
+                  "enum": ["SOW", "Proposal", "Both"],
+                  "description": "Type of document to search"
+                },
+                "keywords": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Keywords to search for"
+                },
+                "date_range": {
+                  "type": "string",
+                  "description": "Date range filter"
+                },
+                "max_results": {
+                  "type": "integer",
+                  "default": 10,
+                  "description": "Maximum number of results to return"
+                }
+              },
+              "required": ["client_name", "document_type"]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Parse_Search_Input": {
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@triggerBody()",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "client_name": { "type": "string" },
+                "document_type": { "type": "string" },
+                "keywords": { "type": "array" },
+                "date_range": { "type": "string" },
+                "max_results": { "type": "integer" }
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Search_SOW_Library": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetFileItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SharePointSiteUrl')",
+              "table": "SOWs",
+              "$top": "@coalesce(body('Parse_Search_Input')?['max_results'], 10)"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Parse_Search_Input": ["Succeeded"]
+          },
+          "metadata": {
+            "description": "Searches the SOWs document library in SharePoint"
+          }
+        },
+        "Search_Proposal_Library": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetFileItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SharePointSiteUrl')",
+              "table": "Proposals",
+              "$top": "@coalesce(body('Parse_Search_Input')?['max_results'], 10)"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Parse_Search_Input": ["Succeeded"]
+          },
+          "metadata": {
+            "description": "Searches the Proposals document library in SharePoint"
+          }
+        },
+        "Filter_By_Client": {
+          "type": "Query",
+          "inputs": {
+            "from": "@union(if(equals(body('Parse_Search_Input')?['document_type'], 'Proposal'), json('[]'), body('Search_SOW_Library')?['value']), if(equals(body('Parse_Search_Input')?['document_type'], 'SOW'), json('[]'), body('Search_Proposal_Library')?['value']))",
+            "where": "@or(contains(toLower(item()?['Client']), toLower(body('Parse_Search_Input')?['client_name'])), contains(toLower(item()?['Title']), toLower(body('Parse_Search_Input')?['client_name'])))"
+          },
+          "runAfter": {
+            "Search_SOW_Library": ["Succeeded", "Skipped"],
+            "Search_Proposal_Library": ["Succeeded", "Skipped"]
+          }
+        },
+        "Build_Response": {
+          "type": "Compose",
+          "inputs": {
+            "documents_found": "@body('Filter_By_Client')",
+            "total_count": "@length(body('Filter_By_Client'))",
+            "search_criteria": {
+              "client_name": "@body('Parse_Search_Input')?['client_name']",
+              "document_type": "@body('Parse_Search_Input')?['document_type']",
+              "keywords": "@body('Parse_Search_Input')?['keywords']"
+            },
+            "timestamp": "@utcNow()"
+          },
+          "runAfter": {
+            "Filter_By_Client": ["Succeeded"]
+          }
+        },
+        "Return_Response": {
+          "type": "Response",
+          "kind": "Http",
+          "inputs": {
+            "statusCode": 200,
+            "body": "@body('Build_Response')",
+            "headers": {
+              "Content-Type": "application/json"
+            }
+          },
+          "runAfter": {
+            "Build_Response": ["Succeeded"]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "schemaVersion": "1.0.0.0"
+  }
+}

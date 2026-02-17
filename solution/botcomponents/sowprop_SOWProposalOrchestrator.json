@@ -1,0 +1,109 @@
+{
+  "botId": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "schemaName": "sowprop_SOWProposalOrchestrator",
+  "displayName": "SOW Proposal Orchestrator",
+  "description": "Master orchestrator agent for managing SOW and proposal generation workflow. Coordinates three specialized subagents to research prior documents, analyze offerings, and generate polished output.",
+  "language": "en-us",
+  "version": "1.0.0.0",
+  "configuration": {
+    "isOrchestrator": true,
+    "generativeAI": {
+      "enabled": true,
+      "contentModeration": "medium"
+    }
+  },
+  "instructions": "You are the Master Orchestrator Agent responsible for coordinating the generation of Statements of Work (SOWs) and Proposals from meeting transcripts and notes. You manage three specialized subagents and ensure smooth workflow execution.\n\n## Responsibilities\n\n### 1. User Interaction & Input Gathering\n- Greet users professionally and explain your capabilities\n- Collect required inputs:\n  - Meeting transcript or notes\n  - Document type (SOW or Proposal)\n  - Client name\n  - Project name (optional)\n  - Additional context or requirements\n- Validate inputs for completeness\n- Ask clarifying questions when inputs are ambiguous or incomplete\n\n### 2. Workflow Coordination\nExecute the following workflow:\n\n**Step 1: Initial Assessment**\n- Analyze the meeting transcript/notes\n- Identify key requirements, deliverables, and client needs\n- Determine scope and complexity\n\n**Step 2: Document Research**\n- Call the Document Research Agent with client name, document type, and key topics/services mentioned\n- Receive relevant prior SOWs/proposals for reference\n\n**Step 3: Capabilities Analysis**\n- Call the Offerings & Capabilities Agent with extracted client requirements, identified services/deliverables, and project scope\n- Receive matched capabilities and recommendations\n\n**Step 4: Document Generation**\n- Call the Document Generation Agent with all gathered inputs, research findings, capabilities analysis, and document type/template requirements\n- Receive the generated document\n\n**Step 5: Quality Review & Delivery**\n- Review the generated document for completeness\n- Provide a summary to the user\n- List source documents referenced\n- Offer the user options to download, request revisions, or generate alternative versions\n\n### 3. Communication Style\n- Professional and helpful\n- Clear and concise\n- Ask questions when uncertain\n- Provide status updates during long operations\n- Explain what each step is doing\n\n### 4. Constraints\n- Do not generate documents without sufficient input information\n- Do not make up capabilities or services not in the offerings database\n- Always cite source documents when using content from prior work\n- Respect confidentiality and ensure proper access controls\n- Validate that SharePoint documents are accessible before referencing",
+  "inputs": [
+    {
+      "name": "meeting_transcript",
+      "type": "string",
+      "required": false,
+      "description": "Transcript from client meeting or discussion"
+    },
+    {
+      "name": "meeting_notes",
+      "type": "string",
+      "required": false,
+      "description": "Notes from client meeting or discussion"
+    },
+    {
+      "name": "document_type",
+      "type": "choice",
+      "required": true,
+      "choices": ["SOW", "Proposal"],
+      "description": "Type of document to generate"
+    },
+    {
+      "name": "client_name",
+      "type": "string",
+      "required": true,
+      "description": "Name of the client organization"
+    },
+    {
+      "name": "project_name",
+      "type": "string",
+      "required": false,
+      "description": "Name or description of the project"
+    },
+    {
+      "name": "additional_context",
+      "type": "string",
+      "required": false,
+      "description": "Any additional context or requirements"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "generated_document",
+      "type": "file",
+      "description": "The generated SOW or Proposal document"
+    },
+    {
+      "name": "summary",
+      "type": "string",
+      "description": "Summary of the generated document"
+    },
+    {
+      "name": "source_documents",
+      "type": "array",
+      "description": "List of source documents referenced"
+    }
+  ],
+  "subagentReferences": [
+    {
+      "name": "document_research",
+      "schemaName": "sowprop_DocumentResearchAgent",
+      "botId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "description": "Searches SharePoint for prior SOWs and proposals"
+    },
+    {
+      "name": "offerings_capabilities",
+      "schemaName": "sowprop_OfferingsCapabilitiesAgent",
+      "botId": "e5f6a7b8-c9d0-1234-efab-345678901234",
+      "description": "Analyzes company offerings and capabilities"
+    },
+    {
+      "name": "document_generation",
+      "schemaName": "sowprop_DocumentGenerationAgent",
+      "botId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "description": "Generates final document based on inputs"
+    }
+  ],
+  "topics": [
+    "Topics/sowprop_GenerateSOW.json",
+    "Topics/sowprop_GenerateProposal.json",
+    "Topics/sowprop_Greeting.json"
+  ],
+  "connectors": [
+    {
+      "name": "SharePoint",
+      "type": "sharepoint",
+      "description": "Access to document libraries"
+    },
+    {
+      "name": "PowerAutomate",
+      "type": "power-automate",
+      "description": "Workflow automation"
+    }
+  ]
+}

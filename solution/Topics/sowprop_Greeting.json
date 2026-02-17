@@ -1,0 +1,30 @@
+{
+  "topicId": "e1f2a3b4-c5d6-7890-efab-901234567890",
+  "schemaName": "sowprop_Greeting",
+  "displayName": "Greeting",
+  "description": "Handles initial greeting and guides user to available capabilities.",
+  "version": "1.0.0.0",
+  "status": "published",
+  "triggerPhrases": [
+    "hello",
+    "hi",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "help",
+    "what can you do",
+    "get started"
+  ],
+  "nodes": [
+    {
+      "id": "node_welcome",
+      "type": "message",
+      "message": "Welcome! I'm the SOW & Proposal Generation assistant. I can help you create professional documents from your meeting transcripts and notes.\n\nI can:\n- **Generate a Statement of Work (SOW)** - Detailed scope, deliverables, timeline, and pricing\n- **Generate a Proposal** - Compelling client-facing proposal with solution approach and value proposition\n\nI'll research your prior documents, match your capabilities to client needs, and produce a polished document ready for review.\n\nWhat would you like to create today?",
+      "next": "node_end"
+    },
+    {
+      "id": "node_end",
+      "type": "endConversation"
+    }
+  ]
+}

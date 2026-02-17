@@ -43,14 +43,34 @@ The main orchestrator manages the entire workflow:
 - SharePoint access for document repositories
 - Power Automate for SharePoint integration
 
-## Deployment
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed setup instructions.
+## Quick Start
+1. Run `./package-solution.sh` to build the importable solution ZIP
+2. Import `SOWProposalGeneration_1_0_0_0.zip` into your Copilot Studio environment via Settings > Solutions
+3. Configure SharePoint connections and enable generative AI on each agent
+4. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed setup instructions
 
 ## Project Structure
 ```
 ├── README.md
 ├── DEPLOYMENT.md
-├── orchestrator/
+├── package-solution.sh              # Builds importable solution ZIP
+├── solution/                         # Power Platform solution (importable)
+│   ├── [Content_Types].xml
+│   ├── solution.xml                  # Solution manifest
+│   ├── customizations.xml            # Component references
+│   ├── botcomponents/                # Agent definitions
+│   │   ├── sowprop_SOWProposalOrchestrator.json
+│   │   ├── sowprop_DocumentResearchAgent.json
+│   │   ├── sowprop_OfferingsCapabilitiesAgent.json
+│   │   └── sowprop_DocumentGenerationAgent.json
+│   ├── Topics/                       # Conversation topics
+│   │   ├── sowprop_GenerateSOW.json
+│   │   ├── sowprop_GenerateProposal.json
+│   │   └── sowprop_Greeting.json
+│   └── Workflows/                    # Power Automate cloud flows
+│       ├── SharePoint-DocumentSearch.json
+│       └── Generate-Word-Document.json
+├── orchestrator/                     # Agent design docs
 │   ├── orchestrator-agent.yaml
 │   └── instructions.md
 ├── subagents/
@@ -63,7 +83,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed setup instructions.
 │   └── document-generation/
 │       ├── agent.yaml
 │       └── instructions.md
-├── connectors/
+├── connectors/                       # Flow reference schemas
 │   ├── sharepoint-connector.json
 │   └── power-automate-flows.json
 └── templates/

@@ -1,0 +1,107 @@
+{
+  "botId": "e5f6a7b8-c9d0-1234-efab-345678901234",
+  "schemaName": "sowprop_OfferingsCapabilitiesAgent",
+  "displayName": "Offerings and Capabilities Agent",
+  "description": "Analyzes client requirements and matches them to organizational services, offerings, and capabilities. Provides recommendations for project scope, approach, team composition, and pricing.",
+  "language": "en-us",
+  "version": "1.0.0.0",
+  "configuration": {
+    "isOrchestrator": false,
+    "generativeAI": {
+      "enabled": true,
+      "contentModeration": "medium"
+    }
+  },
+  "instructions": "You are a specialized agent that analyzes client requirements and matches them to your organization's services, offerings, and capabilities. You provide intelligent recommendations for project scope, approach, and pricing.\n\n## Responsibilities\n\n### 1. Requirements Analysis\nParse and understand client needs:\n- Business objectives, technical requirements, desired outcomes\n- Constraints (budget, timeline, technology)\n- Compliance or regulatory needs\n- Categorize as must-have vs nice-to-have, short-term vs long-term\n- Identify implicit needs (security, scalability, training)\n\n### 2. Service Matching\nMatch requirements to available offerings across:\n- Cloud Services (migration, infrastructure, optimization, security)\n- Data & Analytics (platform modernization, BI, AI/ML, governance)\n- Application Services (custom dev, modernization, API, mobile, low-code)\n- Security & Compliance (assessments, IAM, compliance frameworks, SOC)\n- Digital Transformation (strategy, automation, change management)\n- Managed Services (monitoring, DevOps, infrastructure, help desk)\n\n### 3. Solution Design\nRecommend optimal solution approach including:\n- Core services, technology stack, integration architecture\n- Project phases (discovery, design, implementation, testing, deployment, training, support)\n- Delivery model (fixed price vs T&M, agile vs waterfall, onsite vs remote)\n\n### 4. Effort Estimation\nProvide realistic estimates considering complexity, team size, technology maturity, integration complexity, and risk.\n\n### 5. Pricing Recommendations\nDevelop pricing strategies: Fixed Price, Time & Materials, Retainer, or Outcome-Based.\n\n### 6. Team Composition\nRecommend team structure with leadership, delivery team, and specialists.\n\n### 7. Risk Assessment\nIdentify technical, organizational, and external risks with mitigation strategies.\n\n### 8. Value Proposition\nArticulate differentiators, certifications, partnerships, ROI projections, and competitive advantages.\n\n## Constraints\n- Never recommend services the organization cannot deliver\n- Ensure realistic timelines\n- Respect pricing guidelines\n- Include 10-20% contingency in estimates\n- Be transparent about risks and limitations",
+  "inputs": [
+    {
+      "name": "client_requirements",
+      "type": "string",
+      "required": true,
+      "description": "Client needs and requirements extracted from transcript/notes"
+    },
+    {
+      "name": "project_scope",
+      "type": "string",
+      "required": false,
+      "description": "Preliminary project scope and objectives"
+    },
+    {
+      "name": "industry",
+      "type": "string",
+      "required": false,
+      "description": "Client industry vertical"
+    },
+    {
+      "name": "budget_range",
+      "type": "string",
+      "required": false,
+      "description": "Estimated budget range if known"
+    },
+    {
+      "name": "timeline",
+      "type": "string",
+      "required": false,
+      "description": "Expected project timeline or deadline"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "matched_services",
+      "type": "array",
+      "description": "Services that align with client requirements"
+    },
+    {
+      "name": "capabilities_required",
+      "type": "array",
+      "description": "Specific capabilities needed for the project"
+    },
+    {
+      "name": "solution_approach",
+      "type": "string",
+      "description": "Recommended solution architecture"
+    },
+    {
+      "name": "estimated_effort",
+      "type": "object",
+      "description": "Effort estimates by service/phase"
+    },
+    {
+      "name": "pricing_recommendation",
+      "type": "object",
+      "description": "Pricing model and estimated costs"
+    },
+    {
+      "name": "team_composition",
+      "type": "object",
+      "description": "Recommended team structure and roles"
+    },
+    {
+      "name": "risks_considerations",
+      "type": "array",
+      "description": "Potential risks and mitigation strategies"
+    },
+    {
+      "name": "differentiators",
+      "type": "array",
+      "description": "Key differentiators and value propositions"
+    }
+  ],
+  "knowledgeSources": [
+    {
+      "name": "services_catalog",
+      "type": "dataverse",
+      "description": "Complete catalog of company services and offerings"
+    },
+    {
+      "name": "capabilities_matrix",
+      "type": "dataverse",
+      "description": "Detailed capabilities, technologies, and expertise areas"
+    },
+    {
+      "name": "pricing_guidelines",
+      "type": "dataverse",
+      "description": "Standard pricing models and rate cards"
+    }
+  ]
+}

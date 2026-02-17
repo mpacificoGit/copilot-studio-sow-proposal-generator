@@ -1,0 +1,259 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {},
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_wordonlinebusiness": {
+        "runtimeSource": "embedded",
+        "connection": {},
+        "api": {
+          "name": "shared_wordonlinebusiness"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "SharePointSiteUrl": {
+          "defaultValue": "https://yourtenant.sharepoint.com/sites/YourSite",
+          "type": "String",
+          "metadata": {
+            "schemaName": "sowprop_SharePointSiteUrl",
+            "description": "URL of the SharePoint site for document storage"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_type": {
+                  "type": "string",
+                  "enum": ["SOW", "Proposal"]
+                },
+                "client_name": {
+                  "type": "string"
+                },
+                "project_name": {
+                  "type": "string"
+                },
+                "content_sections": {
+                  "type": "object",
+                  "properties": {
+                    "executive_summary": { "type": "string" },
+                    "background": { "type": "string" },
+                    "scope": { "type": "string" },
+                    "deliverables": { "type": "array" },
+                    "timeline": { "type": "object" },
+                    "team": { "type": "object" },
+                    "pricing": { "type": "object" },
+                    "terms": { "type": "string" }
+                  }
+                },
+                "metadata": {
+                  "type": "object",
+                  "properties": {
+                    "author": { "type": "string" },
+                    "version": { "type": "string" },
+                    "date": { "type": "string" },
+                    "status": { "type": "string" }
+                  }
+                }
+              },
+              "required": ["document_type", "client_name", "project_name", "content_sections"]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Parse_Generation_Input": {
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@triggerBody()",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_type": { "type": "string" },
+                "client_name": { "type": "string" },
+                "project_name": { "type": "string" },
+                "content_sections": { "type": "object" },
+                "metadata": { "type": "object" }
+              }
+            }
+          },
+          "runAfter": {}
+        },
+        "Generate_Filename": {
+          "type": "Compose",
+          "inputs": "@{replace(body('Parse_Generation_Input')?['client_name'], ' ', '')}_@{replace(body('Parse_Generation_Input')?['project_name'], ' ', '')}_@{body('Parse_Generation_Input')?['document_type']}_v@{coalesce(body('Parse_Generation_Input')?['metadata']?['version'], '1.0')}_@{formatDateTime(utcNow(), 'yyyy-MM-dd')}.docx",
+          "runAfter": {
+            "Parse_Generation_Input": ["Succeeded"]
+          }
+        },
+        "Get_Template": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetFileContent",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SharePointSiteUrl')",
+              "id": "@if(equals(body('Parse_Generation_Input')?['document_type'], 'SOW'), '/Templates/SOW-Template.docx', '/Templates/Proposal-Template.docx')"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Parse_Generation_Input": ["Succeeded"]
+          },
+          "metadata": {
+            "description": "Retrieves the Word template from SharePoint Templates library"
+          }
+        },
+        "Populate_Word_Template": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_wordonlinebusiness",
+              "operationId": "PopulateTemplateV2",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness"
+            },
+            "parameters": {
+              "source": "@parameters('SharePointSiteUrl')",
+              "documentLibrary": "Templates",
+              "file": "@if(equals(body('Parse_Generation_Input')?['document_type'], 'SOW'), '/Templates/SOW-Template.docx', '/Templates/Proposal-Template.docx')",
+              "templateParameters": {
+                "ClientName": "@body('Parse_Generation_Input')?['client_name']",
+                "ProjectName": "@body('Parse_Generation_Input')?['project_name']",
+                "DocumentType": "@body('Parse_Generation_Input')?['document_type']",
+                "Date": "@coalesce(body('Parse_Generation_Input')?['metadata']?['date'], formatDateTime(utcNow(), 'yyyy-MM-dd'))",
+                "Version": "@coalesce(body('Parse_Generation_Input')?['metadata']?['version'], '1.0')",
+                "Status": "@coalesce(body('Parse_Generation_Input')?['metadata']?['status'], 'Draft')",
+                "ExecutiveSummary": "@body('Parse_Generation_Input')?['content_sections']?['executive_summary']",
+                "Background": "@body('Parse_Generation_Input')?['content_sections']?['background']",
+                "Scope": "@body('Parse_Generation_Input')?['content_sections']?['scope']",
+                "Deliverables": "@body('Parse_Generation_Input')?['content_sections']?['deliverables']",
+                "Timeline": "@body('Parse_Generation_Input')?['content_sections']?['timeline']",
+                "Team": "@body('Parse_Generation_Input')?['content_sections']?['team']",
+                "Pricing": "@body('Parse_Generation_Input')?['content_sections']?['pricing']",
+                "Terms": "@body('Parse_Generation_Input')?['content_sections']?['terms']"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Get_Template": ["Succeeded"]
+          },
+          "metadata": {
+            "description": "Populates the Word template with generated content"
+          }
+        },
+        "Save_To_SharePoint": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "CreateFile",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SharePointSiteUrl')",
+              "folderPath": "/@{if(equals(body('Parse_Generation_Input')?['document_type'], 'SOW'), 'SOWs', 'Proposals')}/Generated",
+              "name": "@body('Generate_Filename')",
+              "body": "@body('Populate_Word_Template')"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Populate_Word_Template": ["Succeeded"]
+          },
+          "metadata": {
+            "description": "Saves the generated document to the appropriate SharePoint library"
+          }
+        },
+        "Update_Metadata": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "PatchItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SharePointSiteUrl')",
+              "table": "@if(equals(body('Parse_Generation_Input')?['document_type'], 'SOW'), 'SOWs', 'Proposals')",
+              "id": "@body('Save_To_SharePoint')?['ItemId']",
+              "item": {
+                "Client": "@body('Parse_Generation_Input')?['client_name']",
+                "ProjectName": "@body('Parse_Generation_Input')?['project_name']",
+                "DocumentType": "@body('Parse_Generation_Input')?['document_type']",
+                "Status": "Draft"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Save_To_SharePoint": ["Succeeded"]
+          }
+        },
+        "Build_Response": {
+          "type": "Compose",
+          "inputs": {
+            "success": true,
+            "document_url": "@body('Save_To_SharePoint')?['{Link}']",
+            "document_id": "@body('Save_To_SharePoint')?['ItemId']",
+            "file_name": "@body('Generate_Filename')",
+            "file_size_bytes": "@body('Save_To_SharePoint')?['{Size}']",
+            "sections_included": "@if(not(empty(body('Parse_Generation_Input')?['content_sections'])), createArray('executive_summary', 'background', 'scope', 'deliverables', 'timeline', 'team', 'pricing', 'terms'), json('[]'))",
+            "metadata": {
+              "title": "@{body('Parse_Generation_Input')?['client_name']} - @{body('Parse_Generation_Input')?['project_name']} @{body('Parse_Generation_Input')?['document_type']}",
+              "author": "@coalesce(body('Parse_Generation_Input')?['metadata']?['author'], 'Copilot Studio')",
+              "version": "@coalesce(body('Parse_Generation_Input')?['metadata']?['version'], '1.0')",
+              "date": "@coalesce(body('Parse_Generation_Input')?['metadata']?['date'], formatDateTime(utcNow(), 'yyyy-MM-dd'))",
+              "status": "@coalesce(body('Parse_Generation_Input')?['metadata']?['status'], 'Draft')"
+            },
+            "generated_at": "@utcNow()"
+          },
+          "runAfter": {
+            "Update_Metadata": ["Succeeded"]
+          }
+        },
+        "Return_Response": {
+          "type": "Response",
+          "kind": "Http",
+          "inputs": {
+            "statusCode": 200,
+            "body": "@body('Build_Response')",
+            "headers": {
+              "Content-Type": "application/json"
+            }
+          },
+          "runAfter": {
+            "Build_Response": ["Succeeded"]
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "schemaVersion": "1.0.0.0"
+  }
+}

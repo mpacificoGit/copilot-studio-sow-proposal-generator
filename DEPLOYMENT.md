@@ -20,6 +20,54 @@ This guide walks you through deploying the multi-agent Copilot Studio solution f
 - Power Automate environment
 - Service account for SharePoint access
 
+## Solution Package
+
+This repository includes a pre-built Power Platform solution package that can be imported directly into your Copilot Studio environment. This is the recommended deployment method.
+
+### Building the Solution Package
+Run the packaging script from the repository root:
+
+```bash
+./package-solution.sh
+```
+
+This produces `SOWProposalGeneration_1_0_0_0.zip` containing all agents, topics, and Power Automate flow definitions.
+
+### Importing the Solution
+1. Navigate to [Copilot Studio](https://copilotstudio.microsoft.com)
+2. Go to **Settings > Solutions** (or use the [Power Apps maker portal](https://make.powerapps.com) > Solutions)
+3. Click **Import solution**
+4. Upload `SOWProposalGeneration_1_0_0_0.zip`
+5. When prompted, configure the required connections:
+   - **SharePoint Online** - authenticate with your service account
+   - **Word Online (Business)** - authenticate for document template population
+6. Click **Import** and wait for the process to complete
+
+### What the Solution Includes
+
+| Component | Type | Description |
+|-----------|------|-------------|
+| SOW Proposal Orchestrator | Agent (Bot) | Master orchestrator that coordinates the full workflow |
+| Document Research Agent | Agent (Bot) | Searches SharePoint for prior SOWs and proposals |
+| Offerings and Capabilities Agent | Agent (Bot) | Matches client needs to organizational services |
+| Document Generation Agent | Agent (Bot) | Generates polished SOW/Proposal documents |
+| Generate SOW | Topic | Conversation flow for SOW creation |
+| Generate Proposal | Topic | Conversation flow for Proposal creation |
+| Greeting | Topic | Welcome message and capability overview |
+| SharePoint-DocumentSearch | Cloud Flow | Power Automate flow for SharePoint document search |
+| Generate-Word-Document | Cloud Flow | Power Automate flow for Word document generation |
+
+### Post-Import Configuration
+After importing the solution, complete these steps:
+
+1. **Set the SharePoint site URL** - Edit both Power Automate flows and update the `SharePointSiteUrl` parameter to point to your SharePoint site
+2. **Enable generative AI** - For each agent, go to Settings > Generative AI and enable it
+3. **Publish each agent** - Agents are imported in draft state and must be published before use
+
+Then proceed with the remaining deployment steps below for SharePoint setup, knowledge base configuration, and testing.
+
+---
+
 ## Deployment Steps
 
 ### Step 1: Environment Setup
@@ -30,10 +78,11 @@ This guide walks you through deploying the multi-agent Copilot Studio solution f
 3. Name: `SOW-Proposal-Production`
 4. Region: Select appropriate region for your organization
 5. Security group: Assign appropriate security group
+6. Import the solution package (see [Solution Package](#solution-package) above)
 
 #### 1.2 Configure Generative AI
-1. Navigate to Settings > Generative AI
-2. Enable generative AI capabilities for the agent
+1. For each imported agent, navigate to Settings > Generative AI
+2. Enable generative AI capabilities
 3. Select the desired AI model from the built-in options provided by Copilot Studio
 4. Configure content moderation settings as appropriate for your organization
 
@@ -108,55 +157,51 @@ Create flow: `Generate-Word-Document`
 
 **Flow Template Location:** `/connectors/power-automate-flows.json`
 
-### Step 4: Create Copilot Studio Agents
+### Step 4: Configure Copilot Studio Agents
 
-#### 4.1 Import Master Orchestrator
-1. In Copilot Studio, click Create > Agent
-2. Name: `SOW Proposal Orchestrator`
-3. Navigate to Settings > Advanced
-4. Import configuration from `/orchestrator/orchestrator-agent.yaml`
-5. Upload instructions from `/orchestrator/instructions.md`
-6. Enable generative AI in agent settings
+> **Note:** If you imported the solution package, all agents and topics are already created. Follow the steps below to verify configuration and apply any customizations.
 
-#### 4.2 Import Subagents
+#### 4.1 Verify Master Orchestrator
+1. Open the `SOW Proposal Orchestrator` agent in Copilot Studio
+2. Verify the instructions are loaded (or paste from `/orchestrator/instructions.md`)
+3. Enable generative AI in agent settings
+4. Confirm the three subagent references are connected
+
+#### 4.2 Verify Subagents
 
 **Document Research Agent:**
-1. Create new agent: `Document Research Agent`
-2. Import config from `/subagents/document-research/agent.yaml`
-3. Upload instructions from `/subagents/document-research/instructions.md`
-4. Configure connectors:
+1. Open the `Document Research Agent`
+2. Verify instructions are loaded (or paste from `/subagents/document-research/instructions.md`)
+3. Confirm connectors are configured:
    - SharePoint connector
    - Power Automate flow: `SharePoint-DocumentSearch`
-5. Test connection
+4. Test connection
 
 **Offerings & Capabilities Agent:**
-1. Create new agent: `Offerings Capabilities Agent`
-2. Import config from `/subagents/offerings-capabilities/agent.yaml`
-3. Upload instructions from `/subagents/offerings-capabilities/instructions.md`
-4. Upload knowledge base:
+1. Open the `Offerings Capabilities Agent`
+2. Verify instructions are loaded (or paste from `/subagents/offerings-capabilities/instructions.md`)
+3. Upload knowledge base:
    - Services catalog
    - Capabilities matrix
    - Pricing guidelines
-5. Configure data sources
+4. Configure data sources
 
 **Document Generation Agent:**
-1. Create new agent: `Document Generation Agent`
-2. Import config from `/subagents/document-generation/agent.yaml`
-3. Upload instructions from `/subagents/document-generation/instructions.md`
-4. Configure connectors:
+1. Open the `Document Generation Agent`
+2. Verify instructions are loaded (or paste from `/subagents/document-generation/instructions.md`)
+3. Confirm connectors are configured:
    - Power Automate flow: `Generate-Word-Document`
-5. Test generation
+4. Test generation
 
-#### 4.3 Link Agents
-1. Open Master Orchestrator
+#### 4.3 Verify Topics
+1. Open the Master Orchestrator
 2. Navigate to Topics > Manage topics
-3. Add topic: "Generate SOW"
-4. Add topic: "Generate Proposal"
-5. In each topic, add actions:
-   - Call Document Research Agent
-   - Call Offerings Capabilities Agent
-   - Call Document Generation Agent
-6. Configure data flow between agents
+3. Verify the following topics exist and are enabled:
+   - **Generate SOW** - Conversation flow for SOW creation
+   - **Generate Proposal** - Conversation flow for Proposal creation
+   - **Greeting** - Welcome message and capability overview
+4. Each topic should already have actions configured to call the appropriate subagents
+5. If topics are missing, recreate them using the definitions in `/solution/Topics/`
 
 ### Step 5: Knowledge Base Setup
 

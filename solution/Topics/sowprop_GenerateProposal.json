@@ -1,0 +1,126 @@
+{
+  "topicId": "d0e1f2a3-b4c5-6789-defa-890123456789",
+  "schemaName": "sowprop_GenerateProposal",
+  "displayName": "Generate Proposal",
+  "description": "Main topic for generating a Proposal document from meeting transcripts or notes.",
+  "version": "1.0.0.0",
+  "status": "published",
+  "triggerPhrases": [
+    "generate a proposal",
+    "create a proposal",
+    "I need a proposal",
+    "build a proposal document",
+    "draft a proposal",
+    "write a proposal",
+    "proposal from meeting",
+    "create proposal from transcript",
+    "new proposal",
+    "prepare a proposal"
+  ],
+  "nodes": [
+    {
+      "id": "node_greeting",
+      "type": "message",
+      "message": "I'll help you generate a Proposal. I'll need a few details to get started.",
+      "next": "node_ask_client"
+    },
+    {
+      "id": "node_ask_client",
+      "type": "question",
+      "question": "What is the client organization name?",
+      "variable": "client_name",
+      "variableType": "string",
+      "required": true,
+      "next": "node_ask_transcript"
+    },
+    {
+      "id": "node_ask_transcript",
+      "type": "question",
+      "question": "Please share the meeting transcript or notes. You can paste the text directly or describe the key discussion points.",
+      "variable": "meeting_content",
+      "variableType": "string",
+      "required": true,
+      "next": "node_ask_project"
+    },
+    {
+      "id": "node_ask_project",
+      "type": "question",
+      "question": "What is the project name or a brief description? (You can skip this if unsure.)",
+      "variable": "project_name",
+      "variableType": "string",
+      "required": false,
+      "next": "node_ask_context"
+    },
+    {
+      "id": "node_ask_context",
+      "type": "question",
+      "question": "Any additional context, requirements, or constraints I should know about? (Type 'none' to skip.)",
+      "variable": "additional_context",
+      "variableType": "string",
+      "required": false,
+      "next": "node_confirm"
+    },
+    {
+      "id": "node_confirm",
+      "type": "message",
+      "message": "Thank you. I'm now coordinating with my specialized agents to:\n\n1. Research similar proposals from your document library\n2. Analyze your offerings and capabilities for the best match\n3. Generate a polished Proposal\n\nThis will take a moment...",
+      "next": "node_call_research"
+    },
+    {
+      "id": "node_call_research",
+      "type": "action",
+      "actionType": "callAgent",
+      "agentId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "agentName": "Document Research Agent",
+      "inputMapping": {
+        "client_name": "{client_name}",
+        "document_type": "Proposal",
+        "keywords": []
+      },
+      "outputVariable": "research_findings",
+      "next": "node_call_offerings"
+    },
+    {
+      "id": "node_call_offerings",
+      "type": "action",
+      "actionType": "callAgent",
+      "agentId": "e5f6a7b8-c9d0-1234-efab-345678901234",
+      "agentName": "Offerings and Capabilities Agent",
+      "inputMapping": {
+        "client_requirements": "{meeting_content}",
+        "project_scope": "{project_name}"
+      },
+      "outputVariable": "capabilities_analysis",
+      "next": "node_call_generation"
+    },
+    {
+      "id": "node_call_generation",
+      "type": "action",
+      "actionType": "callAgent",
+      "agentId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "agentName": "Document Generation Agent",
+      "inputMapping": {
+        "document_type": "Proposal",
+        "client_name": "{client_name}",
+        "project_name": "{project_name}",
+        "requirements_summary": "{meeting_content}",
+        "research_findings": "{research_findings}",
+        "capabilities_analysis": "{capabilities_analysis}",
+        "meeting_content": "{meeting_content}",
+        "additional_context": "{additional_context}"
+      },
+      "outputVariable": "generated_document",
+      "next": "node_deliver"
+    },
+    {
+      "id": "node_deliver",
+      "type": "message",
+      "message": "Your Proposal has been generated.\n\n**Summary:** {generated_document.summary}\n\n**Document:** {generated_document.document_file}\n\nWould you like to:\n1. Download the document\n2. Request specific revisions\n3. Generate an alternative version with different scope",
+      "next": "node_end"
+    },
+    {
+      "id": "node_end",
+      "type": "endConversation"
+    }
+  ]
+}

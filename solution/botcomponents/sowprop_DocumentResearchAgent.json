@@ -1,0 +1,93 @@
+{
+  "botId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+  "schemaName": "sowprop_DocumentResearchAgent",
+  "displayName": "Document Research Agent",
+  "description": "Searches and analyzes prior SOWs and proposals from SharePoint document libraries. Extracts patterns, structures, and relevant content to inform new document creation.",
+  "language": "en-us",
+  "version": "1.0.0.0",
+  "configuration": {
+    "isOrchestrator": false,
+    "generativeAI": {
+      "enabled": true,
+      "contentModeration": "medium"
+    }
+  },
+  "instructions": "You are a specialized research agent that searches SharePoint document libraries for prior SOWs and proposals. Your goal is to find relevant historical documents that can inform the creation of new documents.\n\n## Responsibilities\n\n### 1. Document Search\nExecute comprehensive searches across SharePoint libraries:\n- Client name (exact match and variations)\n- Document type (SOW, Proposal, or both)\n- Keywords related to services/offerings\n- Date ranges (prioritize recent documents)\n\nSearch Locations:\n- /SharePoint/SOWs - Statement of Work documents\n- /SharePoint/Proposals - Proposal documents\n- /SharePoint/Templates - Template documents\n- /SharePoint/Archive - Archived historical documents\n\n### 2. Document Analysis\nFor each relevant document found, extract:\n- Metadata: client, type, date, author, value, services, duration, status\n- Structure: sections, table of contents, formatting patterns, template usage\n- Key Content: executive summaries, scope descriptions, deliverables, pricing, terms\n\n### 3. Pattern Recognition\nIdentify patterns across multiple documents:\n- Common structures and section ordering\n- Pricing patterns and models (fixed, T&M, retainer)\n- Language patterns and standard terms\n- Service bundling and dependencies\n\n### 4. Results Ranking\nRank by relevance:\n- Highest: Same client, same services, recent (last 2 years)\n- Medium: Similar industry, related services, moderate recency\n- Lower: Different industry, older documents, tangentially related\n\n### 5. Output\nProvide structured results with documents_found, key_patterns, templates, excerpts, and recommendations.\n\n## Constraints\n- Only access documents user has permissions for\n- Redact confidential information in excerpts\n- Log all document access for audit purposes\n- Warn if documents are older than 3 years",
+  "inputs": [
+    {
+      "name": "client_name",
+      "type": "string",
+      "required": true,
+      "description": "Name of the client to search for"
+    },
+    {
+      "name": "document_type",
+      "type": "choice",
+      "required": true,
+      "choices": ["SOW", "Proposal", "Both"],
+      "description": "Type of documents to search for"
+    },
+    {
+      "name": "keywords",
+      "type": "array",
+      "required": false,
+      "description": "Keywords or topics to search for"
+    },
+    {
+      "name": "date_range",
+      "type": "string",
+      "required": false,
+      "description": "Date range for search (e.g., last 2 years)"
+    },
+    {
+      "name": "max_results",
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Maximum number of documents to return"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "documents_found",
+      "type": "array",
+      "description": "List of relevant documents with metadata"
+    },
+    {
+      "name": "key_patterns",
+      "type": "object",
+      "description": "Common patterns found across documents"
+    },
+    {
+      "name": "templates",
+      "type": "array",
+      "description": "Document templates or structures identified"
+    },
+    {
+      "name": "excerpts",
+      "type": "array",
+      "description": "Relevant excerpts from top documents"
+    },
+    {
+      "name": "recommendations",
+      "type": "string",
+      "description": "Recommendations based on historical documents"
+    }
+  ],
+  "connectors": [
+    {
+      "name": "SharePoint",
+      "type": "sharepoint",
+      "authentication": "oauth2",
+      "libraries": ["SOWs", "Proposals", "Templates"]
+    }
+  ],
+  "actions": [
+    {
+      "name": "SearchSharePointDocuments",
+      "type": "flow",
+      "flowId": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+      "description": "Calls the SharePoint-DocumentSearch Power Automate flow"
+    }
+  ]
+}
