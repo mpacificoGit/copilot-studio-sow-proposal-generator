@@ -44,7 +44,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Copilot Studio export files
-*.zip
 exports/
 
 # Test files
