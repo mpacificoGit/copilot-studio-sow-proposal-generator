@@ -9,18 +9,15 @@ This guide walks you through deploying the multi-agent Copilot Studio solution f
 - Microsoft Copilot Studio license (per-user or capacity-based)
 - Microsoft 365 E3/E5 or Business Premium
 - Power Automate Premium (for SharePoint connectors)
-- Azure OpenAI Service or access to GPT-4 models
 
 ### Required Permissions
 - Copilot Studio environment administrator
 - SharePoint site collection administrator (for document libraries)
 - Power Platform administrator (for connector setup)
-- Azure subscription contributor (if using Azure OpenAI)
 
 ### Technical Requirements
 - SharePoint Online with document libraries for SOWs and Proposals
 - Power Automate environment
-- Azure OpenAI endpoint (or OpenAI API key)
 - Service account for SharePoint access
 
 ## Deployment Steps
@@ -34,14 +31,11 @@ This guide walks you through deploying the multi-agent Copilot Studio solution f
 4. Region: Select appropriate region for your organization
 5. Security group: Assign appropriate security group
 
-#### 1.2 Configure AI Models
-1. Navigate to Settings > AI capabilities
-2. Add Azure OpenAI connection:
-   - Endpoint: `https://[your-resource].openai.azure.com/`
-   - API Key: [Your API Key]
-   - Deployment: `gpt-4` or `gpt-4-turbo`
-3. Test connection
-4. Set default model to GPT-4
+#### 1.2 Configure Generative AI
+1. Navigate to Settings > Generative AI
+2. Enable generative AI capabilities for the agent
+3. Select the desired AI model from the built-in options provided by Copilot Studio
+4. Configure content moderation settings as appropriate for your organization
 
 ### Step 2: SharePoint Configuration
 
@@ -122,8 +116,7 @@ Create flow: `Generate-Word-Document`
 3. Navigate to Settings > Advanced
 4. Import configuration from `/orchestrator/orchestrator-agent.yaml`
 5. Upload instructions from `/orchestrator/instructions.md`
-6. Configure AI model: GPT-4
-7. Set temperature: 0.7
+6. Enable generative AI in agent settings
 
 #### 4.2 Import Subagents
 
@@ -298,10 +291,6 @@ Test full workflow:
 Create `.env` file (do not commit to source control):
 
 ```env
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_KEY=your-api-key
-AZURE_OPENAI_DEPLOYMENT=gpt-4
-
 SHAREPOINT_SITE_URL=https://yourtenant.sharepoint.com/sites/YourSite
 SHAREPOINT_CLIENT_ID=your-client-id
 SHAREPOINT_CLIENT_SECRET=your-client-secret
@@ -321,8 +310,8 @@ Import `/connectors/power-automate-flows.json` for automation workflows
 ### Common Issues
 
 **Agent not responding:**
-- Check Azure OpenAI quota and limits
-- Verify API keys are valid
+- Check Copilot Studio service health
+- Verify generative AI is enabled in agent settings
 - Check network connectivity
 - Review error logs in Copilot Studio
 

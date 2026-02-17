@@ -41,7 +41,6 @@ The main orchestrator manages the entire workflow:
 ## Prerequisites
 - Microsoft Copilot Studio license
 - SharePoint access for document repositories
-- Azure OpenAI or GPT-4 model access
 - Power Automate for SharePoint integration
 
 ## Deployment
